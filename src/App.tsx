@@ -8,27 +8,21 @@ import { BlockNoteView } from "@blocknote/shadcn";
 import "@blocknote/shadcn/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
 
-import { useTiptapSync } from "@convex-dev/prosemirror-sync/tiptap";
+import { useBlockNoteSync } from "@convex-dev/prosemirror-sync/blocknote";
 import { api } from "../convex/_generated/api";
 import { BlockNoteEditor, nodeToBlock } from "@blocknote/core";
 
 export default function App() {
   const [viewer] = useState(randomName());
-  const sync = useTiptapSync(api.prosemirror, "test", { debug: true });
+  const sync = useBlockNoteSync(api.prosemirror, "test", { debug: true });
+  if (!sync.isLoading && !sync.editor) {
+    sync.create({ type: "doc", content: [] });
+  }
   return (
     <Layout menu={<UserMenu>{viewer}</UserMenu>}>
-      {sync.isLoading ? (
-        <div>Loading...</div>
-      ) : sync.initialContent === null ? (
-        <button onClick={() => void sync.create({ type: "doc", content: [] })}>
-          Create document
-        </button>
-      ) : (
-        <Doc
-          initialContent={sync.initialContent}
-          syncExtension={sync.extension}
-        />
-      )}
+      <div style={{ height: "100%", overflow: "auto" }}>
+        {sync.editor && <BlockNoteView editor={sync.editor} />}
+      </div>
     </Layout>
   );
 }
@@ -61,5 +55,9 @@ function Doc(props: { initialContent: any; syncExtension: any }) {
     },
   });
 
-  return <BlockNoteView editor={editor} />;
+  return (
+    <div style={{ height: "100%", overflow: "auto" }}>
+      <BlockNoteView editor={editor} />
+    </div>
+  );
 }
